@@ -75,6 +75,8 @@ async function run() {
         logger.info('Alpha 合并冲突，强制同步');
         const alphaPkgPath = await resolvePackageJSON();
         const alphaPkgInfo = await readPackageJSON(alphaPkgPath);
+        logger.info(`alpha version ${alphaPkgInfo.version}`);
+        logger.info(`beta version ${newVersion}`);
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
           await exec('git', ['add', alphaPkgPath]);
           await exec('git', ['merge', '--continue']);
