@@ -8,16 +8,12 @@ async function run() {
   try {
     const targetBranch = context.ref;
 
-    logger.info(`${targetBranch}: ${JSON.stringify(context.payload)}`);
-
-    return;
-
     if (targetBranch !== 'alpha' && targetBranch !== 'beta' && targetBranch !== 'main') {
       logger.info(`不支持的分支: ${targetBranch}`);
       return;
     }
 
-    if (!context.payload.pull_request) {
+    if (context.eventName !== 'pull_request') {
       logger.info('不是 PR 触发');
       return;
     }
@@ -45,6 +41,8 @@ async function run() {
     }
 
     logger.info(`新版本: ${newVersion}`);
+
+    return;
 
     // 更新版本文件
     pkgInfo.version = newVersion!;
