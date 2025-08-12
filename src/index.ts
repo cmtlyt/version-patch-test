@@ -4,6 +4,11 @@ import { readPackageJSON, resolvePackageJSON, writePackageJSON } from 'pkg-types
 import semver from 'semver';
 import core, { logger } from './core';
 
+async function signUser() {
+  await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
+  await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+}
+
 async function run() {
   try {
     const targetBranch = context.ref.split('/').pop()!;
@@ -12,6 +17,9 @@ async function run() {
       logger.info(`不支持的分支: ${targetBranch}`);
       return;
     }
+
+    logger.info('sign action user');
+    await signUser();
 
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
@@ -25,7 +33,7 @@ async function run() {
     if (targetBranch === 'alpha') {
       const lastSemver = semver.parse(currentVersion);
       if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== 'alpha')) {
-        logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main，需要提升 minor 版本。`);
+        logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main, 需要提升 minor 版本。`);
         newVersion = semver.inc(currentVersion, 'prepatch', 'alpha');
       } else {
         // 升级 alpha 补丁版本
@@ -35,10 +43,8 @@ async function run() {
       // beta 补丁升级
       newVersion = semver.inc(currentVersion, 'prerelease', 'beta');
     } else if (targetBranch === 'main') {
-      // 去除 preid，转为正式版本
+      // 去除 preid, 转为正式版本
       newVersion = semver.inc(currentVersion, 'patch');
-    } else {
-      throw new Error(`不支持的分支: ${targetBranch}`);
     }
 
     logger.info(`新版本: ${newVersion}`);
@@ -53,29 +59,33 @@ async function run() {
     await exec('git', ['commit', '-m', `chore: bump version to ${newVersion} for ${targetBranch}`]);
     await exec('git', ['push', 'origin', targetBranch]);
 
-    // Rebase 操作
+    core.exportVariable('GIT_MERGE_AUTOEDIT', 'no');
     if (targetBranch === 'beta') {
-      // git merge origin/beta --no-edit --no-ff -m "chore: sync beta v${latest_tag} to alpha [skip ci]" || {
-      //   echo "Alpha 合并冲突，强制同步"
-      //   git reset --hard origin/beta
-      //   git commit --allow-empty -m "chore: force sync from beta v${latest_tag} [skip ci]"
-      // }
-
-      // git push origin alpha --force-with-lease || echo "Alpha 推送失败"
-      await exec('git', ['fetch', 'origin', 'beta']);
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
+      const alphaPkgInfo = await readPackageJSON(pkgPath);
+      logger.info(`alpha version ${alphaPkgInfo.version}`);
+      logger.info(`beta version ${newVersion}`);
       await exec('git', [
         'merge',
-        'origin/beta',
+        'beta',
         '--no-edit',
         '--no-ff',
         '-m',
         `chore: sync beta v${newVersion} to alpha [skip ci]`,
       ]).catch(async () => {
-        logger.info('Alpha 合并冲突，强制同步');
-        await exec('git', ['reset', '--hard', 'origin/beta']);
-        await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
+        logger.warning('Alpha 合并冲突');
+        if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
+          logger.info('Alpha 版本号大于 beta 版本号, 忽略版本变更');
+          const newAlphaPkgInfo = await readPackageJSON(pkgPath);
+          newAlphaPkgInfo.version = alphaPkgInfo.version;
+          logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
+          await writePackageJSON(pkgPath, newAlphaPkgInfo);
+          await exec('git', ['add', '.']);
+          await exec('git', ['commit', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
+        } else {
+          logger.error('Alpha 版本号小于 beta 版本号, 无法自动合并, 尝试打开 pr 进行处理');
+        }
       });
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
         logger.info('Alpha 推送失败');
@@ -92,7 +102,7 @@ async function run() {
         '-m',
         `chore: sync main v${newVersion} to beta [skip ci]`,
       ]).catch(async () => {
-        logger.info('Beta 合并冲突，强制同步');
+        logger.info('Beta 合并冲突, 强制同步');
         await exec('git', ['reset', '--hard', 'origin/main']);
         await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from main v${newVersion} [skip ci]`]);
       });

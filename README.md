@@ -10,9 +10,9 @@ pr test
 
 beta bug fix test
 
-123
+1231 beta patch
 
-1231
+1231 alpha patch
 
 ## Setup
 
