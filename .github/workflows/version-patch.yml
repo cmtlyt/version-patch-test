@@ -5,6 +5,7 @@ on:
       - alpha
       - beta
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   repository_dispatch:
     types: [label-changed]
 
