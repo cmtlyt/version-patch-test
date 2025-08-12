@@ -28011,6 +28011,9 @@ var octokit = (() => {
   return (0, import_github.getOctokit)(core_default.getInput("token", { required: true }));
 })();
 async function getCurentPR() {
+  if (!import_github.context.payload.pull_request) {
+    return {};
+  }
   const { data: pr } = await octokit.rest.pulls.get({
     owner: import_github.context.repo.owner,
     repo: import_github.context.repo.repo,
@@ -28032,7 +28035,7 @@ async function run() {
       }
     }
     logger.info(`\u76EE\u6807\u5206\u652F: ${targetBranch}`);
-    logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
+    logger.info(`pr labels ${JSON.stringify(pr.labels || [], null, 2)}`);
     logger.info("sign action user");
     await signUser();
     const pkgPath = await resolvePackageJSON();
