@@ -74,7 +74,7 @@ async function run() {
         '--no-edit',
         '--no-ff',
         '-m',
-        `"chore: sync beta v${newVersion} to alpha [skip ci]"`,
+        `chore: sync beta v${newVersion} to alpha [skip ci]`,
       ]).catch(async () => {
         logger.warning('Alpha 合并冲突');
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
@@ -84,7 +84,7 @@ async function run() {
           logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
           await writePackageJSON(pkgPath, newAlphaPkgInfo);
           await exec('git', ['add', '.']);
-          await exec('git', ['commit', '-m', `"chore: sync beta v${newVersion} to alpha [skip ci]"`]);
+          await exec('git', ['commit', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
         } else {
           logger.error('Alpha 版本号小于 beta 版本号吗, 无法自动合并, 尝试打开 pr 进行处理');
         }
