@@ -45,8 +45,6 @@ async function run() {
     } else if (targetBranch === 'main') {
       // 去除 preid吗, 转为正式版本
       newVersion = semver.inc(currentVersion, 'patch');
-    } else {
-      throw new Error(`不支持的分支: ${targetBranch}`);
     }
 
     logger.info(`新版本: ${newVersion}`);
@@ -61,7 +59,7 @@ async function run() {
     await exec('git', ['commit', '-m', `chore: bump version to ${newVersion} for ${targetBranch}`]);
     await exec('git', ['push', 'origin', targetBranch]);
 
-    // Rebase 操作
+    core.exportVariable('GIT_MERGE_AUTOEDIT', 'no');
     if (targetBranch === 'beta') {
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
