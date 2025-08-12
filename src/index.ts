@@ -73,8 +73,15 @@ async function run() {
         `chore: sync beta v${newVersion} to alpha [skip ci]`,
       ]).catch(async () => {
         logger.info('Alpha 合并冲突，强制同步');
-        await exec('git', ['reset', '--hard', 'origin/beta']);
-        await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
+        const alphaPkgPath = await resolvePackageJSON();
+        const alphaPkgInfo = await readPackageJSON(alphaPkgPath);
+        if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
+          await exec('git', ['add', alphaPkgPath]);
+          await exec('git', ['merge', '--continue']);
+        } else {
+          // await exec('git', ['reset', '--hard', 'origin/beta']);
+          // await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
+        }
       });
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
         logger.info('Alpha 推送失败');
