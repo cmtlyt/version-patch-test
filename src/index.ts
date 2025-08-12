@@ -13,11 +13,6 @@ async function run() {
       return;
     }
 
-    // if (context.eventName !== 'pull_request') {
-    //   logger.info('不是 PR 触发');
-    //   return;
-    // }
-
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
     const pkgInfo = await readPackageJSON(pkgPath);
@@ -28,8 +23,14 @@ async function run() {
     let newVersion: string | null = null;
 
     if (targetBranch === 'alpha') {
-      // 升级 alpha 补丁版本
-      newVersion = semver.inc(currentVersion, 'prerelease', 'alpha');
+      const lastSemver = semver.parse(currentVersion);
+      if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== 'alpha')) {
+        logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main，需要提升 minor 版本。`);
+        newVersion = semver.inc(currentVersion, 'prepatch', 'alpha');
+      } else {
+        // 升级 alpha 补丁版本
+        newVersion = semver.inc(currentVersion, 'prerelease', 'alpha');
+      }
     } else if (targetBranch === 'beta') {
       // beta 补丁升级
       newVersion = semver.inc(currentVersion, 'prerelease', 'beta');
@@ -41,8 +42,6 @@ async function run() {
     }
 
     logger.info(`新版本: ${newVersion}`);
-
-    return;
 
     // 更新版本文件
     pkgInfo.version = newVersion!;
@@ -56,15 +55,50 @@ async function run() {
 
     // Rebase 操作
     if (targetBranch === 'beta') {
+      // git merge origin/beta --no-edit --no-ff -m "chore: sync beta v${latest_tag} to alpha [skip ci]" || {
+      //   echo "Alpha 合并冲突，强制同步"
+      //   git reset --hard origin/beta
+      //   git commit --allow-empty -m "chore: force sync from beta v${latest_tag} [skip ci]"
+      // }
+
+      // git push origin alpha --force-with-lease || echo "Alpha 推送失败"
       await exec('git', ['fetch', 'origin', 'beta']);
-      await exec('git', ['checkout', 'alpha']);
-      await exec('git', ['rebase', 'origin/beta']);
-      await exec('git', ['push', 'origin', 'alpha', '--force']);
+      await exec('git', ['fetch', 'origin', 'alpha']);
+      await exec('git', ['switch', 'alpha']);
+      await exec('git', [
+        'merge',
+        'origin/beta',
+        '--no-edit',
+        '--no-ff',
+        '-m',
+        `chore: sync beta v${newVersion} to alpha [skip ci]`,
+      ]).catch(async () => {
+        logger.info('Alpha 合并冲突，强制同步');
+        await exec('git', ['reset', '--hard', 'origin/beta']);
+        await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
+      });
+      await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
+        logger.info('Alpha 推送失败');
+      });
     } else if (targetBranch === 'main') {
       await exec('git', ['fetch', 'origin', 'main']);
-      await exec('git', ['checkout', 'beta']);
-      await exec('git', ['rebase', 'origin/main']);
-      await exec('git', ['push', 'origin', 'beta', '--force']);
+      await exec('git', ['fetch', 'origin', 'beta']);
+      await exec('git', ['switch', 'beta']);
+      await exec('git', [
+        'merge',
+        'origin/main',
+        '--no-edit',
+        '--no-ff',
+        '-m',
+        `chore: sync main v${newVersion} to beta [skip ci]`,
+      ]).catch(async () => {
+        logger.info('Beta 合并冲突，强制同步');
+        await exec('git', ['reset', '--hard', 'origin/main']);
+        await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from main v${newVersion} [skip ci]`]);
+      });
+      await exec('git', ['push', 'origin', 'beta', '--force-with-lease']).catch(() => {
+        logger.info('Beta 推送失败');
+      });
     }
 
     // 输出新版本
