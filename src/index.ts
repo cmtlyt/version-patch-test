@@ -92,8 +92,7 @@ async function run() {
           logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
           await writePackageJSON(alphaPkgPath, newAlphaPkgInfo);
           await exec('git', ['add', '.']);
-          await signUser();
-          await exec('git', ['merge', '--continue'], { env: { GIT_MERGE_AUTOEDIT: 'no' } });
+          await exec('git', ['merge', '--continue']);
         } else {
           // await exec('git', ['reset', '--hard', 'origin/beta']);
           // await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
