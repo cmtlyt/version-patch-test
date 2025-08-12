@@ -79,3 +79,5 @@ jobs:
 
       - name: Version patch
         uses: ./
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

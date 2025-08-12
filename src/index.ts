@@ -1,5 +1,5 @@
 import { exec } from '@actions/exec';
-import { context } from '@actions/github';
+import { context, getOctokit } from '@actions/github';
 import { readPackageJSON, resolvePackageJSON, writePackageJSON } from 'pkg-types';
 import semver from 'semver';
 import core, { logger } from './core';
@@ -7,6 +7,17 @@ import core, { logger } from './core';
 async function signUser() {
   await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
   await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+}
+
+async function getCurentPR() {
+  const octokit = getOctokit(core.getInput('token', { required: true }));
+  const { data: pr } = await octokit.rest.pulls.get({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    pull_number: context.payload.pull_request!.number,
+  });
+
+  return pr;
 }
 
 async function run() {
@@ -18,7 +29,9 @@ async function run() {
       return;
     }
 
-    logger.info(`labels: ${JSON.stringify(context.payload.pull_request?.labels || {})}`);
+    const pr = await getCurentPR();
+
+    logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
 
     logger.info('sign action user');
     await signUser();
