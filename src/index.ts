@@ -80,7 +80,7 @@ async function run() {
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
           logger.info('Alpha 版本号大于 beta 版本号，忽略版本变更');
           await exec('git', ['add', '.']);
-          await exec('git', ['merge', '--continue']);
+          await exec('git', ['merge', '--continue', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
         } else {
           // await exec('git', ['reset', '--hard', 'origin/beta']);
           // await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
