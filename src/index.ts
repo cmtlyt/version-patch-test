@@ -13,6 +13,10 @@ async function run() {
       return;
     }
 
+    logger.info('sign action user');
+    await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
+    await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
     const pkgInfo = await readPackageJSON(pkgPath);
