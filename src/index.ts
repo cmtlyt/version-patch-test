@@ -69,9 +69,7 @@ async function run() {
       await exec('git', ['rebase', 'origin/beta', '-f', '--no-ff']).catch(async (error) => {
         logger.warning('变基失败:', error.message);
         logger.warning('尝试自动解决冲突...');
-        await exec('git', ['add', '.']);
-        await exec('git', ['rebase', '--continue', '-m', `"chore: sync beta v${newVersion} to alpha [skip ci]"`]);
-        await exec('git', ['push', 'origin', 'alpha', '--force']);
+        await exec('git', ['rebase', '--skip']);
       });
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
         logger.info('Alpha 推送失败');
