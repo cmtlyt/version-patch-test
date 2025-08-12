@@ -70,7 +70,7 @@ async function run() {
         logger.warning('变基失败:', error.message);
         logger.warning('尝试自动解决冲突...');
         await exec('git', ['add', '.']);
-        await exec('git', ['rebase', '--continue', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
+        await exec('git', ['rebase', '--continue', '-m', `"chore: sync beta v${newVersion} to alpha [skip ci]"`]);
         await exec('git', ['push', 'origin', 'alpha', '--force']);
       });
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
