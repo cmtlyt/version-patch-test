@@ -79,6 +79,10 @@ async function run() {
         logger.warning('Alpha 合并冲突');
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
           logger.info('Alpha 版本号大于 beta 版本号，忽略版本变更');
+          const newAlphaPkgInfo = await readPackageJSON(alphaPkgPath);
+          newAlphaPkgInfo.version = alphaPkgInfo.version;
+          logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
+          await writePackageJSON(alphaPkgPath, newAlphaPkgInfo);
           await exec('git', ['add', '.']);
           await exec('git', ['merge', '--continue']);
           await exec('git', ['commit', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
