@@ -28022,18 +28022,20 @@ async function getCurentPR() {
   });
   return pr;
 }
-function getVersionPatchLabel(labels = []) {
+function getReleaseTypeFromLabel(labels = [], betaVersion, currentVersion) {
   const labelNames = labels.map((label) => label.name);
+  let tempReleaseType = "";
   if (labelNames.includes("major")) {
-    return "major";
+    tempReleaseType = "premajor";
+  } else if (labelNames.includes("minor")) {
+    tempReleaseType = "preminor";
+  } else if (labelNames.includes("patch")) {
+    tempReleaseType = "prepatch";
   }
-  if (labelNames.includes("minor")) {
-    return "minor";
+  if (tempReleaseType && import_semver.default.gt(currentVersion, betaVersion)) {
+    tempReleaseType = "prerelease";
   }
-  if (labelNames.includes("patch")) {
-    return "patch";
-  }
-  return "";
+  return tempReleaseType;
 }
 async function run() {
   try {
@@ -28049,25 +28051,32 @@ async function run() {
       }
     }
     logger.info(`\u76EE\u6807\u5206\u652F: ${targetBranch}`);
-    const releaseType = getVersionPatchLabel(pr.labels);
+    await signUser();
+    const pkgPath = await resolvePackageJSON();
+    await (0, import_exec.exec)("git", ["stash"]);
+    await (0, import_exec.exec)("git", ["fetch", "origin", "beta"]);
+    await (0, import_exec.exec)("git", ["switch", "beta"]);
+    const betaPkgInfo = await readPackageJSON(pkgPath);
+    logger.info(`beta version ${betaPkgInfo.version}`);
+    await (0, import_exec.exec)("git", ["switch", targetBranch]);
+    await (0, import_exec.exec)("git", ["stash", "pop"]);
+    const pkgInfo = await readPackageJSON(pkgPath);
+    const currentVersion = pkgInfo.version;
+    logger.info(`\u5F53\u524D\u7248\u672C: ${currentVersion}`);
+    const releaseType = getReleaseTypeFromLabel(pr.labels, betaPkgInfo.version, currentVersion);
     logger.info(`\u7248\u672C\u5347\u7EA7\u7C7B\u578B: ${releaseType}`);
     if (!releaseType) {
       logger.warning(`\u7248\u672C\u5347\u7EA7\u7C7B\u578B\u4E3A\u7A7A, \u8DF3\u8FC7`);
       return;
     }
-    await signUser();
-    const pkgPath = await resolvePackageJSON();
-    const pkgInfo = await readPackageJSON(pkgPath);
-    const currentVersion = pkgInfo.version;
-    logger.info(`\u5F53\u524D\u7248\u672C: ${currentVersion}`);
     let newVersion = null;
     if (targetBranch === "alpha") {
       const lastSemver = import_semver.default.parse(currentVersion);
       if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== "alpha")) {
         logger.info(`\u4E0A\u4E00\u4E2A\u7248\u672C (${currentVersion}) \u6765\u81EA beta \u6216 main, \u9700\u8981\u63D0\u5347 minor \u7248\u672C\u3002`);
-        newVersion = import_semver.default.inc(currentVersion, `pre${releaseType}`, "alpha");
+        newVersion = import_semver.default.inc(currentVersion, releaseType, "alpha");
       } else {
-        newVersion = import_semver.default.inc(currentVersion, `pre${releaseType}`, "alpha");
+        newVersion = import_semver.default.inc(currentVersion, releaseType, "alpha");
       }
     } else if (targetBranch === "beta") {
       newVersion = import_semver.default.inc(currentVersion, "prerelease", "beta");
