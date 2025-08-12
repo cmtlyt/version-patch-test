@@ -22248,15 +22248,15 @@ var init_endpoints = __esm({
 });
 
 // node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@10.4.1_@octokit+core@5.2.2/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
-function endpointsToMethods(octokit) {
+function endpointsToMethods(octokit2) {
   const newMethods = {};
   for (const scope of endpointMethodsMap.keys()) {
-    newMethods[scope] = new Proxy({ octokit, scope, cache: {} }, handler);
+    newMethods[scope] = new Proxy({ octokit: octokit2, scope, cache: {} }, handler);
   }
   return newMethods;
 }
-function decorate(octokit, scope, methodName, defaults, decorations) {
-  const requestWithDefaults = octokit.request.defaults(defaults);
+function decorate(octokit2, scope, methodName, defaults, decorations) {
+  const requestWithDefaults = octokit2.request.defaults(defaults);
   function withDecorations(...args) {
     let options = requestWithDefaults.endpoint.merge(...args);
     if (decorations.mapToData) {
@@ -22268,12 +22268,12 @@ function decorate(octokit, scope, methodName, defaults, decorations) {
     }
     if (decorations.renamed) {
       const [newScope, newMethodName] = decorations.renamed;
-      octokit.log.warn(
+      octokit2.log.warn(
         `octokit.${scope}.${methodName}() has been renamed to octokit.${newScope}.${newMethodName}()`
       );
     }
     if (decorations.deprecated) {
-      octokit.log.warn(decorations.deprecated);
+      octokit2.log.warn(decorations.deprecated);
     }
     if (decorations.renamedParameters) {
       const options2 = requestWithDefaults.endpoint.merge(...args);
@@ -22281,7 +22281,7 @@ function decorate(octokit, scope, methodName, defaults, decorations) {
         decorations.renamedParameters
       )) {
         if (name in options2) {
-          octokit.log.warn(
+          octokit2.log.warn(
             `"${name}" parameter is deprecated for "octokit.${scope}.${methodName}()". Use "${alias}" instead`
           );
           if (!(alias in options2)) {
@@ -22351,7 +22351,7 @@ var init_endpoints_to_methods = __esm({
       set(target, methodName, value) {
         return target.cache[methodName] = value;
       },
-      get({ octokit, scope, cache: cache2 }, methodName) {
+      get({ octokit: octokit2, scope, cache: cache2 }, methodName) {
         if (cache2[methodName]) {
           return cache2[methodName];
         }
@@ -22362,14 +22362,14 @@ var init_endpoints_to_methods = __esm({
         const { endpointDefaults, decorations } = method;
         if (decorations) {
           cache2[methodName] = decorate(
-            octokit,
+            octokit2,
             scope,
             methodName,
             endpointDefaults,
             decorations
           );
         } else {
-          cache2[methodName] = octokit.request.defaults(endpointDefaults);
+          cache2[methodName] = octokit2.request.defaults(endpointDefaults);
         }
         return cache2[methodName];
       }
@@ -22383,14 +22383,14 @@ __export(dist_src_exports, {
   legacyRestEndpointMethods: () => legacyRestEndpointMethods,
   restEndpointMethods: () => restEndpointMethods
 });
-function restEndpointMethods(octokit) {
-  const api = endpointsToMethods(octokit);
+function restEndpointMethods(octokit2) {
+  const api = endpointsToMethods(octokit2);
   return {
     rest: api
   };
 }
-function legacyRestEndpointMethods(octokit) {
-  const api = endpointsToMethods(octokit);
+function legacyRestEndpointMethods(octokit2) {
+  const api = endpointsToMethods(octokit2);
   return {
     ...api,
     rest: api
@@ -22442,9 +22442,9 @@ function normalizePaginatedListResponse(response) {
   response.data.total_count = totalCount;
   return response;
 }
-function iterator(octokit, route, parameters) {
-  const options = typeof route === "function" ? route.endpoint(parameters) : octokit.request.endpoint(route, parameters);
-  const requestMethod = typeof route === "function" ? route : octokit.request;
+function iterator(octokit2, route, parameters) {
+  const options = typeof route === "function" ? route.endpoint(parameters) : octokit2.request.endpoint(route, parameters);
+  const requestMethod = typeof route === "function" ? route : octokit2.request;
   const method = options.method;
   const headers = options.headers;
   let url = options.url;
@@ -22476,19 +22476,19 @@ function iterator(octokit, route, parameters) {
     })
   };
 }
-function paginate(octokit, route, parameters, mapFn) {
+function paginate(octokit2, route, parameters, mapFn) {
   if (typeof parameters === "function") {
     mapFn = parameters;
     parameters = void 0;
   }
   return gather(
-    octokit,
+    octokit2,
     [],
-    iterator(octokit, route, parameters)[Symbol.asyncIterator](),
+    iterator(octokit2, route, parameters)[Symbol.asyncIterator](),
     mapFn
   );
 }
-function gather(octokit, results, iterator2, mapFn) {
+function gather(octokit2, results, iterator2, mapFn) {
   return iterator2.next().then((result) => {
     if (result.done) {
       return results;
@@ -22503,7 +22503,7 @@ function gather(octokit, results, iterator2, mapFn) {
     if (earlyExit) {
       return results;
     }
-    return gather(octokit, results, iterator2, mapFn);
+    return gather(octokit2, results, iterator2, mapFn);
   });
 }
 function isPaginatingEndpoint(arg) {
@@ -22513,10 +22513,10 @@ function isPaginatingEndpoint(arg) {
     return false;
   }
 }
-function paginateRest(octokit) {
+function paginateRest(octokit2) {
   return {
-    paginate: Object.assign(paginate.bind(null, octokit), {
-      iterator: iterator.bind(null, octokit)
+    paginate: Object.assign(paginate.bind(null, octokit2), {
+      iterator: iterator.bind(null, octokit2)
     })
   };
 }
@@ -28007,13 +28007,32 @@ async function signUser() {
   await (0, import_exec.exec)("git", ["config", "--global", "user.name", "GitHub Action"]);
   await (0, import_exec.exec)("git", ["config", "--global", "user.email", "action@github.com"]);
 }
+var octokit = (() => {
+  return (0, import_github.getOctokit)(core_default.getInput("token", { required: true }));
+})();
+async function getCurentPR() {
+  const { data: pr } = await octokit.rest.pulls.get({
+    owner: import_github.context.repo.owner,
+    repo: import_github.context.repo.repo,
+    pull_number: import_github.context.payload.pull_request.number
+  });
+  return pr;
+}
 async function run() {
   try {
-    const targetBranch = import_github.context.ref.split("/").pop();
+    const pr = await getCurentPR();
+    let targetBranch = import_github.context.ref.split("/").pop();
     if (targetBranch !== "alpha" && targetBranch !== "beta" && targetBranch !== "main") {
-      logger.info(`\u4E0D\u652F\u6301\u7684\u5206\u652F: ${targetBranch}`);
-      return;
+      logger.info(`\u4E0D\u652F\u6301\u7684\u5206\u652F: ${import_github.context.ref}, \u4ECE pr \u83B7\u53D6`);
+      logger.info(`pr base ref ${pr.head.ref}`);
+      targetBranch = pr.head.ref.split("/").pop();
+      if (targetBranch !== "alpha" && targetBranch !== "beta" && targetBranch !== "main") {
+        logger.info(`\u4E0D\u652F\u6301\u7684\u5206\u652F: ${pr.head.ref}, \u4ECE pr \u83B7\u53D6`);
+        return;
+      }
     }
+    logger.info(`\u76EE\u6807\u5206\u652F: ${targetBranch}`);
+    logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
     logger.info("sign action user");
     await signUser();
     const pkgPath = await resolvePackageJSON();
@@ -28035,13 +28054,13 @@ async function run() {
       newVersion = import_semver.default.inc(currentVersion, "patch");
     }
     logger.info(`\u65B0\u7248\u672C: ${newVersion}`);
+    await (0, import_exec.exec)("git", ["switch", targetBranch]);
     pkgInfo.version = newVersion;
     await writePackageJSON(pkgPath, pkgInfo);
     logger.info("\u7248\u672C\u6587\u4EF6\u5DF2\u66F4\u65B0");
-    await (0, import_exec.exec)("git", ["add", pkgPath]);
+    await (0, import_exec.exec)("git", ["add", "."]);
     await (0, import_exec.exec)("git", ["commit", "-m", `chore: bump version to ${newVersion} for ${targetBranch}`]);
     await (0, import_exec.exec)("git", ["push", "origin", targetBranch]);
-    core_default.exportVariable("GIT_MERGE_AUTOEDIT", "no");
     if (targetBranch === "beta") {
       await (0, import_exec.exec)("git", ["fetch", "origin", "alpha"]);
       await (0, import_exec.exec)("git", ["switch", "alpha"]);
