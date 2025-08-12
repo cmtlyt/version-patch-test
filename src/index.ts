@@ -74,7 +74,7 @@ async function run() {
         '--no-edit',
         '--no-ff',
         '-m',
-        `chore: sync beta v${newVersion} to alpha [skip ci]`,
+        `"chore: sync beta v${newVersion} to alpha [skip ci]"`,
       ]).catch(async () => {
         logger.warning('Alpha 合并冲突');
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
@@ -84,8 +84,7 @@ async function run() {
           logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
           await writePackageJSON(alphaPkgPath, newAlphaPkgInfo);
           await exec('git', ['add', '.']);
-          await exec('git', ['merge', '--continue']);
-          await exec('git', ['commit', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
+          await exec('git', ['merge', '--continue', '-m', `"chore: sync beta v${newVersion} to alpha [skip ci]"`]);
         } else {
           // await exec('git', ['reset', '--hard', 'origin/beta']);
           // await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
