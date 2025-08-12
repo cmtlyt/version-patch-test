@@ -61,6 +61,7 @@ async function run() {
     await exec('git', ['commit', '-m', `chore: bump version to ${newVersion} for ${targetBranch}`]);
     await exec('git', ['push', 'origin', targetBranch]);
 
+    core.exportVariable('GIT_MERGE_AUTOEDIT', 'no');
     // Rebase 操作
     if (targetBranch === 'beta') {
       // git merge origin/beta --no-edit --no-ff -m "chore: sync beta v${latest_tag} to alpha [skip ci]" || {

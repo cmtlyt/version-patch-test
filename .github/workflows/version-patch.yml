@@ -47,8 +47,6 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    env:
-      GIT_MERGE_AUTOEDIT: no
 
     steps:
       - name: Checkout
