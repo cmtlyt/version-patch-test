@@ -56,13 +56,13 @@ async function run() {
     if (targetBranch === 'beta') {
       await exec('git', ['fetch', 'origin', 'beta']);
       await exec('git', ['fetch', 'origin', 'alpha']);
-      await exec('git', ['checkout', 'alpha']);
+      await exec('git', ['switch', 'alpha']);
       await exec('git', ['rebase', 'origin/beta']);
       await exec('git', ['push', 'origin', 'alpha', '--force']);
     } else if (targetBranch === 'main') {
       await exec('git', ['fetch', 'origin', 'main']);
       await exec('git', ['fetch', 'origin', 'beta']);
-      await exec('git', ['checkout', 'beta']);
+      await exec('git', ['switch', 'beta']);
       await exec('git', ['rebase', 'origin/main']);
       await exec('git', ['push', 'origin', 'beta', '--force']);
     }
