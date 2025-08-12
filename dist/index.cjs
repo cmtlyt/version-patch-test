@@ -28053,13 +28053,16 @@ async function run() {
     logger.info(`\u76EE\u6807\u5206\u652F: ${targetBranch}`);
     await signUser();
     const pkgPath = await resolvePackageJSON();
-    await (0, import_exec.exec)("git", ["stash"]);
+    let needPopStash = true;
+    await (0, import_exec.exec)("git", ["stash"]).catch(() => {
+      needPopStash = false;
+    });
     await (0, import_exec.exec)("git", ["fetch", "origin", "beta"]);
     await (0, import_exec.exec)("git", ["switch", "beta"]);
     const betaPkgInfo = await readPackageJSON(pkgPath);
     logger.info(`beta version ${betaPkgInfo.version}`);
     await (0, import_exec.exec)("git", ["switch", targetBranch]);
-    await (0, import_exec.exec)("git", ["stash", "pop"]);
+    needPopStash && await (0, import_exec.exec)("git", ["stash", "pop"]);
     const pkgInfo = await readPackageJSON(pkgPath);
     const currentVersion = pkgInfo.version;
     logger.info(`\u5F53\u524D\u7248\u672C: ${currentVersion}`);
