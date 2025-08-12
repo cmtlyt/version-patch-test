@@ -1,6 +1,6 @@
 {
   "name": "rslib-node-esm-ts",
-  "version": "0.0.13-alpha.4",
+  "version": "0.0.13-alpha.5",
   "type": "module",
   "main": "./dist/index.cjs",
   "files": [
