@@ -10,6 +10,8 @@ pr test
 
 beta bug fix test
 
+alpha test
+
 ## Setup
 
 Install the dependencies:
