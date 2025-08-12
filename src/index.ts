@@ -33,7 +33,7 @@ async function run() {
     if (targetBranch === 'alpha') {
       const lastSemver = semver.parse(currentVersion);
       if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== 'alpha')) {
-        logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main吗, 需要提升 minor 版本。`);
+        logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main, 需要提升 minor 版本。`);
         newVersion = semver.inc(currentVersion, 'prepatch', 'alpha');
       } else {
         // 升级 alpha 补丁版本
@@ -43,7 +43,7 @@ async function run() {
       // beta 补丁升级
       newVersion = semver.inc(currentVersion, 'prerelease', 'beta');
     } else if (targetBranch === 'main') {
-      // 去除 preid吗, 转为正式版本
+      // 去除 preid, 转为正式版本
       newVersion = semver.inc(currentVersion, 'patch');
     } else {
       throw new Error(`不支持的分支: ${targetBranch}`);
@@ -78,7 +78,7 @@ async function run() {
       ]).catch(async () => {
         logger.warning('Alpha 合并冲突');
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
-          logger.info('Alpha 版本号大于 beta 版本号吗, 忽略版本变更');
+          logger.info('Alpha 版本号大于 beta 版本号, 忽略版本变更');
           const newAlphaPkgInfo = await readPackageJSON(pkgPath);
           newAlphaPkgInfo.version = alphaPkgInfo.version;
           logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
@@ -86,7 +86,7 @@ async function run() {
           await exec('git', ['add', '.']);
           await exec('git', ['commit', '-m', `chore: sync beta v${newVersion} to alpha [skip ci]`]);
         } else {
-          logger.error('Alpha 版本号小于 beta 版本号吗, 无法自动合并, 尝试打开 pr 进行处理');
+          logger.error('Alpha 版本号小于 beta 版本号, 无法自动合并, 尝试打开 pr 进行处理');
         }
       });
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
