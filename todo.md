@@ -7,3 +7,9 @@ alpha 合并 beta 的时候不能使用强制合并, 不然 alpha 的变更会�
 比如 alpha 版本是 0.0.2-alpha.0, beta 版本是 0.0.1-beta.1 (bug fix) 的时候会出现这个问题
 
 合并后 alpha 版本应该保持 0.0.2-alpha.0, 同时要保留 alpha 新增的变更, 然后还需要应用 beta 的 bug fix 变更
+
+### labels 持续追加版本问题
+
+如果 pr 的 labels 包含设置过, 就会持续更新版本, 而不是追加测试版本号
+
+当 alpha labels minor / alpha version 0.1.0-alpha.0, push alpha 的时候 version 会更新为 0.2.0-alpha.0, 如果再 push 一次的话, version 会更新为 0.3.0-alpha.0, 但是预期是 0.2.0-alpha.1
