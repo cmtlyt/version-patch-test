@@ -12,5 +12,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify no un-staged changes
+        run: |
+          git status --porcelain
+          git diff-files --quiet
+
       - name: Version patch
         uses: ./

@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  undici:
-    hash: d37a6253f946111d2693fafd43eb9a0976810bd2adaf8481b31c85d7ceb6d2b3
-    path: patches/undici.patch
-
 importers:
 
   .:
@@ -481,12 +476,12 @@ snapshots:
       '@octokit/plugin-rest-endpoint-methods': 10.4.1(@octokit/core@5.2.2)
       '@octokit/request': 8.4.1
       '@octokit/request-error': 5.1.1
-      undici: 5.29.0(patch_hash=d37a6253f946111d2693fafd43eb9a0976810bd2adaf8481b31c85d7ceb6d2b3)
+      undici: 5.29.0
 
   '@actions/http-client@2.2.3':
     dependencies:
       tunnel: 0.0.6
-      undici: 5.29.0(patch_hash=d37a6253f946111d2693fafd43eb9a0976810bd2adaf8481b31c85d7ceb6d2b3)
+      undici: 5.29.0
 
   '@actions/io@1.1.3': {}
 
@@ -834,7 +829,7 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici@5.29.0(patch_hash=d37a6253f946111d2693fafd43eb9a0976810bd2adaf8481b31c85d7ceb6d2b3):
+  undici@5.29.0:
     dependencies:
       '@fastify/busboy': 2.1.1
 
