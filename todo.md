@@ -1,0 +1,9 @@
+### 合并问题
+
+alpha 合并到 beta 后, 有新的变更被合并进 alpha, 导致 alpha 版本高于 beta 分支, 同时 beta 分支因为 bug fix 的变更, 需要合并到 alpha, 这时候会产生版本冲突, 和变更冲突, 当前逻辑使用强制合并, 会导致 alpha 变更丢失
+
+alpha 合并 beta 的时候不能使用强制合并, 不然 alpha 的变更会被覆盖
+
+比如 alpha 版本是 0.0.2-alpha.0, beta 版本是 0.0.1-beta.1 (bug fix) 的时候会出现这个问题
+
+合并后 alpha 版本应该保持 0.0.2-alpha.0, 同时要保留 alpha 新增的变更, 然后还需要应用 beta 的 bug fix 变更
