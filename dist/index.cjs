@@ -28021,6 +28021,16 @@ async function getCurentPR() {
   });
   return pr;
 }
+function getVersionPatchLabel(labels = []) {
+  const labelNames = labels.map((label) => label.name);
+  if (labelNames.includes("major")) {
+    return "major";
+  }
+  if (labelNames.includes("minor")) {
+    return "minor";
+  }
+  return "patch";
+}
 async function run() {
   try {
     const pr = await getCurentPR();
@@ -28035,7 +28045,7 @@ async function run() {
       }
     }
     logger.info(`\u76EE\u6807\u5206\u652F: ${targetBranch}`);
-    logger.info(`pr labels ${JSON.stringify(pr.labels || [], null, 2)}`);
+    const releaseType = getVersionPatchLabel(pr.labels);
     logger.info("sign action user");
     await signUser();
     const pkgPath = await resolvePackageJSON();
@@ -28047,9 +28057,9 @@ async function run() {
       const lastSemver = import_semver.default.parse(currentVersion);
       if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== "alpha")) {
         logger.info(`\u4E0A\u4E00\u4E2A\u7248\u672C (${currentVersion}) \u6765\u81EA beta \u6216 main, \u9700\u8981\u63D0\u5347 minor \u7248\u672C\u3002`);
-        newVersion = import_semver.default.inc(currentVersion, "prepatch", "alpha");
+        newVersion = import_semver.default.inc(currentVersion, `pre${releaseType}`, "alpha");
       } else {
-        newVersion = import_semver.default.inc(currentVersion, "prerelease", "alpha");
+        newVersion = import_semver.default.inc(currentVersion, `pre${releaseType}`, "alpha");
       }
     } else if (targetBranch === "beta") {
       newVersion = import_semver.default.inc(currentVersion, "prerelease", "beta");
