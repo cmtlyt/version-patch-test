@@ -8,6 +8,8 @@ beta version patch test1
 
 pr test
 
+beta bug fix test
+
 ## Setup
 
 Install the dependencies:
