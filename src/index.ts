@@ -27,11 +27,17 @@ async function run() {
   try {
     const pr = await getCurentPR();
 
-    const targetBranch = pr?.base.ref.split('/').pop()! || context.ref.split('/').pop()!;
+    let targetBranch = context.ref.split('/').pop()!;
 
     if (targetBranch !== 'alpha' && targetBranch !== 'beta' && targetBranch !== 'main') {
-      logger.info(`不支持的分支: ${targetBranch}`);
-      return;
+      logger.info(`不支持的分支: ${context.ref}, 从 pr 获取`);
+      logger.info(`pr base ref ${pr.head.ref}`);
+
+      targetBranch = pr.head.ref.split('/').pop()!;
+      if (targetBranch !== 'alpha' && targetBranch !== 'beta' && targetBranch !== 'main') {
+        logger.info(`不支持的分支: ${pr.head.ref}, 从 pr 获取`);
+        return;
+      }
     }
 
     logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
