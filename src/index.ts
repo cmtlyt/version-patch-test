@@ -4,6 +4,11 @@ import { readPackageJSON, resolvePackageJSON, writePackageJSON } from 'pkg-types
 import semver from 'semver';
 import core, { logger } from './core';
 
+async function signUser() {
+  await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
+  await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+}
+
 async function run() {
   try {
     const targetBranch = context.ref.split('/').pop()!;
@@ -14,8 +19,7 @@ async function run() {
     }
 
     logger.info('sign action user');
-    await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
-    await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+    await signUser();
 
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
@@ -88,7 +92,7 @@ async function run() {
           logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
           await writePackageJSON(alphaPkgPath, newAlphaPkgInfo);
           await exec('git', ['add', '.']);
-          await exec('git', ['merge', '--continue'], { env: { GIT_MERGE_AUTOEDIT: 'no' } });
+          await exec('GIT_MERGE_AUTOEDIT=no', ['git', 'merge', '--continue']);
         } else {
           // await exec('git', ['reset', '--hard', 'origin/beta']);
           // await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
