@@ -28004,6 +28004,7 @@ var core_default = core;
 
 // src/index.ts
 async function signUser() {
+  logger.info("sign action user");
   await (0, import_exec.exec)("git", ["config", "--global", "user.name", "GitHub Action"]);
   await (0, import_exec.exec)("git", ["config", "--global", "user.email", "action@github.com"]);
 }
@@ -28029,7 +28030,10 @@ function getVersionPatchLabel(labels = []) {
   if (labelNames.includes("minor")) {
     return "minor";
   }
-  return "patch";
+  if (labelNames.includes("patch")) {
+    return "patch";
+  }
+  return "";
 }
 async function run() {
   try {
@@ -28046,7 +28050,11 @@ async function run() {
     }
     logger.info(`\u76EE\u6807\u5206\u652F: ${targetBranch}`);
     const releaseType = getVersionPatchLabel(pr.labels);
-    logger.info("sign action user");
+    logger.info(`\u7248\u672C\u5347\u7EA7\u7C7B\u578B: ${releaseType}`);
+    if (!releaseType) {
+      logger.warning(`\u7248\u672C\u5347\u7EA7\u7C7B\u578B\u4E3A\u7A7A, \u8DF3\u8FC7`);
+      return;
+    }
     await signUser();
     const pkgPath = await resolvePackageJSON();
     const pkgInfo = await readPackageJSON(pkgPath);
