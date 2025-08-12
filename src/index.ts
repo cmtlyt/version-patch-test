@@ -65,13 +65,19 @@ async function run() {
       await exec('git', ['fetch', 'origin', 'beta']);
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
-      await exec('git', ['reset', '--hard', 'origin/alpha']);
-      await exec('git', ['rebase', 'origin/beta']).catch(async function skipRebase(error) {
-        logger.warning('变基失败:', error.message);
-        logger.warning('尝试自动解决冲突...');
-        await exec('git', ['rebase', '--skip']).catch(skipRebase);
+      await exec('git', [
+        'merge',
+        'origin/beta',
+        '--no-edit',
+        '--no-ff',
+        '-m',
+        `chore: sync beta v${newVersion} to alpha [skip ci]`,
+      ]).catch(async () => {
+        logger.info('Alpha 合并冲突，强制同步');
+        await exec('git', ['reset', '--hard', 'origin/beta']);
+        await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
       });
-      await exec('git', ['push', 'origin', 'alpha', '--force']).catch(() => {
+      await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
         logger.info('Alpha 推送失败');
       });
     } else if (targetBranch === 'main') {
