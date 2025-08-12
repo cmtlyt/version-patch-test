@@ -6,7 +6,7 @@ import core, { logger } from './core';
 
 async function run() {
   try {
-    const targetBranch = context.ref;
+    const targetBranch = context.ref.split('/').pop()!;
 
     if (targetBranch !== 'alpha' && targetBranch !== 'beta' && targetBranch !== 'main') {
       logger.info(`不支持的分支: ${targetBranch}`);
