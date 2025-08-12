@@ -18,6 +18,8 @@ async function run() {
       return;
     }
 
+    logger.info(`labels: ${JSON.stringify(context.payload.pull_request?.labels || {})}`);
+
     logger.info('sign action user');
     await signUser();
 

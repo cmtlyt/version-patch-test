@@ -5,6 +5,8 @@ on:
       - alpha
       - beta
   pull_request:
+  repository_dispatch:
+    types: [label-changed]
 
 jobs:
   build:
