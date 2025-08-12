@@ -40,6 +40,8 @@ async function run() {
       }
     }
 
+    logger.info(`目标分支: ${targetBranch}`);
+
     logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
 
     logger.info('sign action user');
@@ -79,11 +81,10 @@ async function run() {
     logger.info('版本文件已更新');
 
     // 提交更改
-    await exec('git', ['add', pkgPath]);
+    await exec('git', ['add', '.']);
     await exec('git', ['commit', '-m', `chore: bump version to ${newVersion} for ${targetBranch}`]);
     await exec('git', ['push', 'origin', targetBranch]);
 
-    core.exportVariable('GIT_MERGE_AUTOEDIT', 'no');
     if (targetBranch === 'beta') {
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
