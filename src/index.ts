@@ -68,13 +68,17 @@ async function run() {
     await signUser();
     const pkgPath = await resolvePackageJSON();
 
-    await exec('git', ['stash']);
+    let needPopStash = true;
+
+    await exec('git', ['stash']).catch(() => {
+      needPopStash = false;
+    });
     await exec('git', ['fetch', 'origin', 'beta']);
     await exec('git', ['switch', 'beta']);
     const betaPkgInfo = await readPackageJSON(pkgPath);
     logger.info(`beta version ${betaPkgInfo.version}`);
     await exec('git', ['switch', targetBranch]);
-    await exec('git', ['stash', 'pop']);
+    needPopStash && (await exec('git', ['stash', 'pop']));
 
     // 读取当前版本号
     const pkgInfo = await readPackageJSON(pkgPath);
