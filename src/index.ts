@@ -27,6 +27,17 @@ async function getCurentPR() {
   return pr;
 }
 
+function getVersionPatchLabel(labels: { name: string }[] = []) {
+  const labelNames = labels.map((label) => label.name);
+  if (labelNames.includes('major')) {
+    return 'major';
+  }
+  if (labelNames.includes('minor')) {
+    return 'minor';
+  }
+  return 'patch';
+}
+
 async function run() {
   try {
     const pr = await getCurentPR();
@@ -46,7 +57,7 @@ async function run() {
 
     logger.info(`目标分支: ${targetBranch}`);
 
-    logger.info(`pr labels ${JSON.stringify(pr.labels || [], null, 2)}`);
+    const releaseType = getVersionPatchLabel(pr.labels);
 
     logger.info('sign action user');
     await signUser();
@@ -64,10 +75,10 @@ async function run() {
       const lastSemver = semver.parse(currentVersion);
       if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== 'alpha')) {
         logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main, 需要提升 minor 版本。`);
-        newVersion = semver.inc(currentVersion, 'prepatch', 'alpha');
+        newVersion = semver.inc(currentVersion, `pre${releaseType}`, 'alpha');
       } else {
         // 升级 alpha 补丁版本
-        newVersion = semver.inc(currentVersion, 'prerelease', 'alpha');
+        newVersion = semver.inc(currentVersion, `pre${releaseType}`, 'alpha');
       }
     } else if (targetBranch === 'beta') {
       // beta 补丁升级
