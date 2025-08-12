@@ -43,6 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' }}
     needs: build
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -67,6 +71,11 @@ jobs:
         with:
           name: publish-artifact
           path: dist
+      
+      - name: Set git user
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
 
       - name: Version patch
         uses: ./

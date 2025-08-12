@@ -42,8 +42,6 @@ async function run() {
 
     logger.info(`新版本: ${newVersion}`);
 
-    return;
-
     // 更新版本文件
     pkgInfo.version = newVersion!;
     await writePackageJSON(pkgPath, pkgInfo);
