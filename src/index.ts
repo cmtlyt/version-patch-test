@@ -64,6 +64,10 @@ async function run() {
       // git push origin alpha --force-with-lease || echo "Alpha 推送失败"
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
+      const alphaPkgPath = await resolvePackageJSON();
+      const alphaPkgInfo = await readPackageJSON(alphaPkgPath);
+      logger.info(`alpha version ${alphaPkgInfo.version}`);
+      logger.info(`beta version ${newVersion}`);
       await exec('git', [
         'merge',
         'beta',
@@ -72,12 +76,9 @@ async function run() {
         '-m',
         `chore: sync beta v${newVersion} to alpha [skip ci]`,
       ]).catch(async () => {
-        logger.info('Alpha 合并冲突，强制同步');
-        const alphaPkgPath = await resolvePackageJSON();
-        const alphaPkgInfo = await readPackageJSON(alphaPkgPath);
-        logger.info(`alpha version ${alphaPkgInfo.version}`);
-        logger.info(`beta version ${newVersion}`);
+        logger.warning('Alpha 合并冲突');
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
+          logger.info('Alpha 版本号大于 beta 版本号，忽略版本变更');
           await exec('git', ['add', '.']);
           await exec('git', ['merge', '--continue']);
         } else {
