@@ -7,7 +7,9 @@ export default defineConfig({
       syntax: ['node 20'],
       dts: true,
       bundle: true,
-      autoExternal: false,
+      autoExternal: {
+        dependencies: false,
+      },
       output: {
         target: 'node',
       },
