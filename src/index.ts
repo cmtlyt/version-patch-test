@@ -13,10 +13,10 @@ async function run() {
       return;
     }
 
-    if (context.eventName !== 'pull_request') {
-      logger.info('不是 PR 触发');
-      return;
-    }
+    // if (context.eventName !== 'pull_request') {
+    //   logger.info('不是 PR 触发');
+    //   return;
+    // }
 
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
