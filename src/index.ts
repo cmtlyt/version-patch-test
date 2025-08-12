@@ -1,7 +1,7 @@
 import { exec } from '@actions/exec';
 import { context, getOctokit } from '@actions/github';
 import { readPackageJSON, resolvePackageJSON, writePackageJSON } from 'pkg-types';
-import semver from 'semver';
+import semver, { type ReleaseType } from 'semver';
 import core, { logger } from './core';
 
 async function signUser() {
@@ -28,18 +28,22 @@ async function getCurentPR() {
   return pr;
 }
 
-function getVersionPatchLabel(labels: { name: string }[] = []) {
+function getReleaseTypeFromLabel(labels: { name: string }[] = [], betaVersion: string, currentVersion: string) {
   const labelNames = labels.map((label) => label.name);
+  let tempReleaseType = '' as ReleaseType;
   if (labelNames.includes('major')) {
-    return 'major';
+    tempReleaseType = 'premajor';
+  } else if (labelNames.includes('minor')) {
+    tempReleaseType = 'preminor';
+  } else if (labelNames.includes('patch')) {
+    tempReleaseType = 'prepatch';
   }
-  if (labelNames.includes('minor')) {
-    return 'minor';
+
+  if (tempReleaseType && semver.gt(currentVersion, betaVersion)) {
+    tempReleaseType = 'prerelease';
   }
-  if (labelNames.includes('patch')) {
-    return 'patch';
-  }
-  return '';
+
+  return tempReleaseType;
 }
 
 async function run() {
@@ -61,21 +65,27 @@ async function run() {
 
     logger.info(`目标分支: ${targetBranch}`);
 
-    const releaseType = getVersionPatchLabel(pr.labels);
+    await signUser();
+    const pkgPath = await resolvePackageJSON();
+
+    await exec('git', ['fetch', 'origin', 'beta']);
+    await exec('git', ['switch', 'beta']);
+    const betaPkgInfo = await readPackageJSON(pkgPath);
+    logger.info(`beta version ${betaPkgInfo.version}`);
+    await exec('git', ['switch', targetBranch]);
+
+    // 读取当前版本号
+    const pkgInfo = await readPackageJSON(pkgPath);
+    const currentVersion = pkgInfo.version!;
+    logger.info(`当前版本: ${currentVersion}`);
+
+    const releaseType = getReleaseTypeFromLabel(pr.labels, betaPkgInfo.version!, currentVersion);
     logger.info(`版本升级类型: ${releaseType}`);
 
     if (!releaseType) {
       logger.warning(`版本升级类型为空, 跳过`);
       return;
     }
-
-    await signUser();
-
-    // 读取当前版本号
-    const pkgPath = await resolvePackageJSON();
-    const pkgInfo = await readPackageJSON(pkgPath);
-    const currentVersion = pkgInfo.version!;
-    logger.info(`当前版本: ${currentVersion}`);
 
     // 计算新版本
     let newVersion: string | null = null;
@@ -84,10 +94,10 @@ async function run() {
       const lastSemver = semver.parse(currentVersion);
       if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== 'alpha')) {
         logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main, 需要提升 minor 版本。`);
-        newVersion = semver.inc(currentVersion, `pre${releaseType}`, 'alpha');
+        newVersion = semver.inc(currentVersion, releaseType, 'alpha');
       } else {
         // 升级 alpha 补丁版本
-        newVersion = semver.inc(currentVersion, `pre${releaseType}`, 'alpha');
+        newVersion = semver.inc(currentVersion, releaseType, 'alpha');
       }
     } else if (targetBranch === 'beta') {
       // beta 补丁升级
