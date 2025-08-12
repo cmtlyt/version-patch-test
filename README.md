@@ -1,5 +1,7 @@
 # Rslib project
 
+version patch test
+
 ## Setup
 
 Install the dependencies:
