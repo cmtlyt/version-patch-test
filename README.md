@@ -10,7 +10,7 @@ pr test
 
 beta bug fix test
 
-1231
+1231 beta patch
 
 1231
 
