@@ -62,12 +62,11 @@ async function run() {
       // }
 
       // git push origin alpha --force-with-lease || echo "Alpha 推送失败"
-      await exec('git', ['fetch', 'origin', 'beta']);
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
       await exec('git', [
         'merge',
-        'origin/beta',
+        'beta',
         '--no-edit',
         '--no-ff',
         '-m',
