@@ -66,10 +66,10 @@ async function run() {
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
       await exec('git', ['reset', '--hard', 'origin/alpha']);
-      await exec('git', ['rebase', 'origin/beta', '-f', '--no-ff']).catch(async (error) => {
+      await exec('git', ['rebase', 'origin/beta', '-f', '--no-ff']).catch(async function skipRebase(error) {
         logger.warning('变基失败:', error.message);
         logger.warning('尝试自动解决冲突...');
-        await exec('git', ['rebase', '--skip']);
+        await exec('git', ['rebase', '--skip']).catch(skipRebase);
       });
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
         logger.info('Alpha 推送失败');
