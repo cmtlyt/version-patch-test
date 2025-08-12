@@ -66,7 +66,7 @@ async function run() {
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
       await exec('git', ['reset', '--hard', 'origin/alpha']);
-      await exec('git', ['rebase', 'origin/beta', '-m', `chore: rebase beta v${newVersion} to alpha [skip ci]`]);
+      await exec('git', ['rebase', 'origin/beta']);
       await exec('git', ['push', 'origin', 'alpha', '--force-with-lease']).catch(() => {
         logger.info('Alpha 推送失败');
       });
