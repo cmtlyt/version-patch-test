@@ -5,6 +5,13 @@ on:
       - alpha
       - beta
   pull_request:
+    branches:
+      - main
+      - alpha
+      - beta
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  repository_dispatch:
+    types: [label-changed]
 
 jobs:
   build:
@@ -41,7 +48,7 @@ jobs:
 
   version-path:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.labels.*) || github.event_name == 'repository_dispatch' }}
     needs: build
     permissions:
       contents: write
@@ -54,19 +61,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
 
       - name: Download publish artifact
         uses: actions/download-artifact@v4
@@ -76,3 +74,5 @@ jobs:
 
       - name: Version patch
         uses: ./
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

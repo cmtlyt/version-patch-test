@@ -9,11 +9,8 @@ branding:
 inputs:
   token:
     description: The NPM access token to use when publishing
-
-outputs:
-  next-version:
-    description: Version of the package.
+    required: true
 
 runs:
   using: node20
-  main: ./dist/index.js
+  main: ./dist/index.cjs
