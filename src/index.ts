@@ -9,8 +9,11 @@ async function signUser() {
   await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
 }
 
+const octokit = (() => {
+  return getOctokit(core.getInput('token', { required: true }));
+})();
+
 async function getCurentPR() {
-  const octokit = getOctokit(core.getInput('token', { required: true }));
   const { data: pr } = await octokit.rest.pulls.get({
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -22,14 +25,14 @@ async function getCurentPR() {
 
 async function run() {
   try {
-    const targetBranch = context.ref.split('/').pop()!;
+    const pr = await getCurentPR();
+
+    const targetBranch = pr?.base.ref.split('/').pop()! || context.ref.split('/').pop()!;
 
     if (targetBranch !== 'alpha' && targetBranch !== 'beta' && targetBranch !== 'main') {
       logger.info(`不支持的分支: ${targetBranch}`);
       return;
     }
-
-    const pr = await getCurentPR();
 
     logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
 
