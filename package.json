@@ -1,6 +1,6 @@
 {
   "name": "rslib-node-esm-ts",
-  "version": "0.0.7-alpha.2",
+  "version": "0.0.8",
   "type": "module",
   "exports": {
     ".": {
