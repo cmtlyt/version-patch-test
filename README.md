@@ -6,6 +6,8 @@ beta version patch test1
 
 全流程测试
 
+pr test
+
 ## Setup
 
 Install the dependencies:
