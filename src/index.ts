@@ -78,7 +78,7 @@ async function run() {
         logger.info(`alpha version ${alphaPkgInfo.version}`);
         logger.info(`beta version ${newVersion}`);
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
-          await exec('git', ['add', alphaPkgPath]);
+          await exec('git', ['add', '.']);
           await exec('git', ['merge', '--continue']);
         } else {
           // await exec('git', ['reset', '--hard', 'origin/beta']);
