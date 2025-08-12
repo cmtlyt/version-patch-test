@@ -66,7 +66,7 @@ async function run() {
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
       await exec('git', ['reset', '--hard', 'origin/alpha']);
-      await exec('git', ['rebase', 'origin/beta', '-f', '-no-ff']).catch(async (error) => {
+      await exec('git', ['rebase', 'origin/beta', '-f', '--no-ff']).catch(async (error) => {
         logger.warning('变基失败:', error.message);
         logger.warning('尝试自动解决冲突...');
         await exec('git', ['add', '.']);
