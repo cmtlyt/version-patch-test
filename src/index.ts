@@ -5,6 +5,7 @@ import semver from 'semver';
 import core, { logger } from './core';
 
 async function signUser() {
+  logger.info('sign action user');
   await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
   await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
 }
@@ -35,7 +36,10 @@ function getVersionPatchLabel(labels: { name: string }[] = []) {
   if (labelNames.includes('minor')) {
     return 'minor';
   }
-  return 'patch';
+  if (labelNames.includes('patch')) {
+    return 'patch';
+  }
+  return '';
 }
 
 async function run() {
@@ -58,8 +62,13 @@ async function run() {
     logger.info(`目标分支: ${targetBranch}`);
 
     const releaseType = getVersionPatchLabel(pr.labels);
+    logger.info(`版本升级类型: ${releaseType}`);
 
-    logger.info('sign action user');
+    if (!releaseType) {
+      logger.warning(`版本升级类型为空, 跳过`);
+      return;
+    }
+
     await signUser();
 
     // 读取当前版本号
