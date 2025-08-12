@@ -75,6 +75,8 @@ async function run() {
 
     logger.info(`新版本: ${newVersion}`);
 
+    await exec('git', ['switch', targetBranch]);
+
     // 更新版本文件
     pkgInfo.version = newVersion!;
     await writePackageJSON(pkgPath, pkgInfo);
