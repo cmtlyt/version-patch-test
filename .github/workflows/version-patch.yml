@@ -73,11 +73,6 @@ jobs:
         with:
           name: publish-artifact
           path: dist
-      
-      - name: Set git user
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
 
       - name: Version patch
         uses: ./

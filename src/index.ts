@@ -4,6 +4,11 @@ import { readPackageJSON, resolvePackageJSON, writePackageJSON } from 'pkg-types
 import semver from 'semver';
 import core, { logger } from './core';
 
+async function signUser() {
+  await exec('git', ['config', '--global', 'user.name', 'GitHub Action']);
+  await exec('git', ['config', '--global', 'user.email', 'action@github.com']);
+}
+
 async function run() {
   try {
     const targetBranch = context.ref.split('/').pop()!;
@@ -12,6 +17,9 @@ async function run() {
       logger.info(`不支持的分支: ${targetBranch}`);
       return;
     }
+
+    logger.info('sign action user');
+    await signUser();
 
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
@@ -53,6 +61,7 @@ async function run() {
     await exec('git', ['commit', '-m', `chore: bump version to ${newVersion} for ${targetBranch}`]);
     await exec('git', ['push', 'origin', targetBranch]);
 
+    core.exportVariable('GIT_MERGE_AUTOEDIT', 'no');
     // Rebase 操作
     if (targetBranch === 'beta') {
       // git merge origin/beta --no-edit --no-ff -m "chore: sync beta v${latest_tag} to alpha [skip ci]" || {
@@ -64,20 +73,27 @@ async function run() {
       // git push origin alpha --force-with-lease || echo "Alpha 推送失败"
       await exec('git', ['fetch', 'origin', 'alpha']);
       await exec('git', ['switch', 'alpha']);
+      const alphaPkgPath = await resolvePackageJSON();
+      const alphaPkgInfo = await readPackageJSON(alphaPkgPath);
+      logger.info(`alpha version ${alphaPkgInfo.version}`);
+      logger.info(`beta version ${newVersion}`);
       await exec('git', [
         'merge',
         'beta',
         '--no-edit',
         '--no-ff',
         '-m',
-        `chore: sync beta v${newVersion} to alpha [skip ci]`,
+        `"chore: sync beta v${newVersion} to alpha [skip ci]"`,
       ]).catch(async () => {
-        logger.info('Alpha 合并冲突，强制同步');
-        const alphaPkgPath = await resolvePackageJSON();
-        const alphaPkgInfo = await readPackageJSON(alphaPkgPath);
+        logger.warning('Alpha 合并冲突');
         if (semver.gt(alphaPkgInfo.version!, newVersion!)) {
-          await exec('git', ['add', alphaPkgPath]);
-          await exec('git', ['merge', '--continue']);
+          logger.info('Alpha 版本号大于 beta 版本号，忽略版本变更');
+          const newAlphaPkgInfo = await readPackageJSON(alphaPkgPath);
+          newAlphaPkgInfo.version = alphaPkgInfo.version;
+          logger.info(`alpha pkg info: ${JSON.stringify(newAlphaPkgInfo)}`);
+          await writePackageJSON(alphaPkgPath, newAlphaPkgInfo);
+          await exec('git', ['add', '.']);
+          await exec('git', ['commit', '-m', `"chore: sync beta v${newVersion} to alpha [skip ci]"`]);
         } else {
           // await exec('git', ['reset', '--hard', 'origin/beta']);
           // await exec('git', ['commit', '--allow-empty', '-m', `chore: force sync from beta v${newVersion} [skip ci]`]);
