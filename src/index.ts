@@ -13,11 +13,6 @@ async function run() {
       return;
     }
 
-    // if (context.eventName !== 'pull_request') {
-    //   logger.info('不是 PR 触发');
-    //   return;
-    // }
-
     // 读取当前版本号
     const pkgPath = await resolvePackageJSON();
     const pkgInfo = await readPackageJSON(pkgPath);
@@ -28,8 +23,14 @@ async function run() {
     let newVersion: string | null = null;
 
     if (targetBranch === 'alpha') {
-      // 升级 alpha 补丁版本
-      newVersion = semver.inc(currentVersion, 'prerelease', 'alpha');
+      const lastSemver = semver.parse(currentVersion);
+      if (lastSemver && (!lastSemver.prerelease || lastSemver.prerelease[0] !== 'alpha')) {
+        logger.info(`上一个版本 (${currentVersion}) 来自 beta 或 main，需要提升 minor 版本。`);
+        newVersion = semver.inc(currentVersion, 'prepatch', 'alpha');
+      } else {
+        // 升级 alpha 补丁版本
+        newVersion = semver.inc(currentVersion, 'prerelease', 'alpha');
+      }
     } else if (targetBranch === 'beta') {
       // beta 补丁升级
       newVersion = semver.inc(currentVersion, 'prerelease', 'beta');

@@ -2,6 +2,8 @@
 
 version patch test
 
+beta version patch test
+
 ## Setup
 
 Install the dependencies:
