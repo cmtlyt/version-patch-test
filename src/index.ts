@@ -14,10 +14,14 @@ const octokit = (() => {
 })();
 
 async function getCurentPR() {
+  if (!context.payload.pull_request) {
+    return {} as Awaited<ReturnType<typeof octokit.rest.pulls.get>>['data'];
+  }
+
   const { data: pr } = await octokit.rest.pulls.get({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    pull_number: context.payload.pull_request!.number,
+    pull_number: context.payload.pull_request.number,
   });
 
   return pr;
@@ -42,7 +46,7 @@ async function run() {
 
     logger.info(`目标分支: ${targetBranch}`);
 
-    logger.info(`pr labels ${JSON.stringify(pr.labels, null, 2)}`);
+    logger.info(`pr labels ${JSON.stringify(pr.labels || [], null, 2)}`);
 
     logger.info('sign action user');
     await signUser();
