@@ -1,0 +1,19 @@
+name: Patch Package Version
+description: auto patch package.json version
+
+author: cmtlyt
+branding:
+  color: blue
+  icon: package
+
+inputs:
+  token:
+    description: The NPM access token to use when publishing
+
+outputs:
+  next-version:
+    description: Version of the package.
+
+runs:
+  using: node20
+  main: ./dist/index.js
